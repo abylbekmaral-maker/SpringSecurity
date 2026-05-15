@@ -5,10 +5,44 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Spring Security Example</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
 </head>
 
 <body>
+<nav class="navbar navbar-dark bg-dark px-3">
+    <span class="navbar-text text-white">
+          ADMIN
+    </span>
+
+    <form th:action="@{/logout}" method="post">
+        <button class="btn btn-link text-secondary text-decoration-none"
+                type="submit">
+            Logout
+        </button>
+    </form>
+</nav>
+<div class="container-fluid">
+    <div class="row" >
+        <div class="col-2 bg-white min-vh-100 pt-3">
+
+            <div class="nav flex-column nav-pills">
+
+                <a class="nav-link active"
+                   th:href="@{/admin}">
+                    Admin
+                </a>
+
+                <a class="nav-link"
+                   th:href="@{/user}">
+                    User
+                </a>
+
+            </div>
+        </div>
+
+        <div class="col-10 bg-light p-4">
 
 <h1>Welcome to Index PAGE!</h1>
 
@@ -19,13 +53,13 @@
     <input type="hidden" name="id" th:value="${user.id}">
 
     Name:
-    <input type="text" name="name" th:value="${user.name}"><br>
+    <input type="text" name="name" th:value="${user.name}" class="form-control"><br>
 
     Last Name:
-    <input type="text" name="lastName" th:value="${user.lastName}"><br>
+    <input type="text" name="lastName" th:value="${user.lastName}" class="form-control"><br>
 
     Age:
-    <input type="number" name="age" th:value="${user.age}"><br>
+    <input type="number" name="age" th:value="${user.age}" class="form-control"><br>
 
     <button type="submit">Add / Update</button>
 </form>
@@ -34,7 +68,7 @@
 
 <h2>All Users</h2>
 
-<table border="1">
+    <table class="table table-striped table-bordered">
 
     <tr>
         <th>ID</th>
@@ -55,23 +89,23 @@
         <td>
             <form th:action="@{/admin/delete}" method="post">
                 <input type="hidden" name="id" th:value="${u.id}">
-                <button type="submit">Delete</button>
+                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
             </form>
         </td>
 
         <td>
-            <a th:href="@{/admin/edit(id=${u.id})}">Edit</a>
+            <a th:href="@{/admin/edit(id=${u.id})}"
+               class="btn btn-primary btn-sm">Edit</a>
         </td>
 
     </tr>
-
-</table>
+    </table>
 
 <br>
 
-<form th:action="@{/logout}" method="post">
-    <button type="submit">Logout</button>
-</form>
+</div>
+</div>
+</div>
 
 </body>
 </html>
