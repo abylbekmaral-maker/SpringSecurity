@@ -46,9 +46,7 @@
 <h1>Welcome to Admin PAGE!</h1>
 
 <h2>Add / Edit User</h2>
-
-<form th:action="@{/admin/save}" method="post">
-
+     <form id="userForm">
     <input type="hidden" name="id" th:value="${user.id}">
 
     Name:
@@ -67,7 +65,7 @@
     <input type="password" name="password" autocomplete="new-password" class="form-control"><br>
 
     Roles:
-    <select name="roles" multiple class="form-select">
+    <select id="roles" name="roles" multiple class="form-select">
 
     <option value = "1">ADMIN</option>
     <option value = "2">USER</option>
@@ -92,33 +90,33 @@
         <th>Delete</th>
         <th>Edit</th>
     </tr>
+        <tbody id="usersTable"></tbody>
 
-    <tr th:each="u : ${users}">
+<!--    <tr th:each="u : ${users}">-->
 
-        <td th:text="${u.id}"></td>
-        <td th:text="${u.name}"></td>
-        <td th:text="${u.lastName}"></td>
-        <td th:text="${u.age}"></td>
-        <td th:text="${u.username}"></td>
-        <td>
-    <span th:each="r : ${u.roles}"
-          th:text="${r.role} + ' '">
-    </span>
-        </td>
+<!--        <td th:text="${u.id}"></td>-->
+<!--        <td th:text="${u.name}"></td>-->
+<!--        <td th:text="${u.lastName}"></td>-->
+<!--        <td th:text="${u.age}"></td>-->
+<!--        <td th:text="${u.username}"></td>-->
+<!--        <td>-->
+<!--    <span th:each="r : ${u.roles}"-->
+<!--          th:text="${r.role} + ' '">-->
+<!--    </span>-->
+<!--        </td>-->
 
-        <td>
-            <form th:action="@{/admin/delete}" method="post">
-                <input type="hidden" name="id" th:value="${u.id}">
-                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-            </form>
-        </td>
+<!--        <td>-->
+<!--            <button th:onclick="'deleteUser(' + ${u.id} + ')'">-->
+<!--                Delete-->
+<!--            </button>-->
+<!--        </td>-->
 
-        <td>
-            <a th:href="@{/admin/edit(id=${u.id})}"
-               class="btn btn-primary btn-sm">Edit</a>
-        </td>
+<!--        <td>-->
+<!--            <a th:href="@{/admin/edit(id=${u.id})}"-->
+<!--               class="btn btn-primary btn-sm">Edit</a>-->
+<!--        </td>-->
 
-    </tr>
+<!--    </tr>-->
     </table>
 
 <br>
@@ -126,6 +124,99 @@
 </div>
 </div>
 </div>
+
+
+<script>
+    async function loadUsers() {
+
+        const response = await fetch('/api/users');
+        const users = await response.json();
+        const table = document.getElementById('usersTable');
+        table.innerHTML = '';
+        for (const u of users) {
+         const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${u.id}</td>
+          <td>${u.name}</td>
+          <td>${u.lastName}</td>
+          <td>${u.age}</td>
+          <td>${u.username}</td>
+
+       <td>
+        ${u.roles.map(r => r.role).join(' ')}
+       </td>
+
+     <td>
+        <button onclick="deleteUser(${u.id})">
+            Delete
+        </button>
+     </td>
+
+      <td>
+        <button onclick="editUser(${u.id})">
+                Edit
+        </button>
+      </td>
+      `;
+            table.appendChild(row);
+         }
+
+    }
+
+    async function deleteUser(id) {
+
+        await fetch('/api/users/' + id, {
+            method: 'DELETE'
+        });
+
+       loadUsers();
+    }
+     async function editUser(id) {
+
+    const response = await fetch('/api/users');
+
+    const users = await response.json();
+
+    const user = users.find(u => u.id === id);
+
+    document.querySelector('[name="id"]').value = user.id;
+    document.querySelector('[name="name"]').value = user.name;
+    document.querySelector('[name="lastName"]').value = user.lastName;
+    document.querySelector('[name="age"]').value = user.age;
+    document.querySelector('[name="username"]').value = user.username;
+    }
+
+    document.getElementById('userForm')
+        .addEventListener('submit', async function (e) {
+
+            e.preventDefault();
+
+            const formData = new FormData(this);
+
+            const user = Object.fromEntries(formData);
+
+            console.log(user);
+
+              user.roles = Array.from(
+              document.getElementById('roles').selectedOptions
+              ).map(option => ({
+               id: option.value
+                       }));
+
+            await fetch('/api/users', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(user)
+            });
+
+            loadUsers();
+            this.reset();
+        });
+            loadUsers();
+
+</script>
 
 </body>
 </html>
