@@ -6,6 +6,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title>Spring Security Example</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
 </head>
@@ -50,22 +52,22 @@
     <input type="hidden" name="id" th:value="${user.id}">
 
     Name:
-    <input type="text" name="name" th:value="${user.name}" class="form-control"><br>
+    <input type="text" name="name" th:value="${user.name}" class="form-control" required ><br>
 
     Last Name:
-    <input type="text" name="lastName" th:value="${user.lastName}" class="form-control"><br>
+    <input type="text" name="lastName" th:value="${user.lastName}" class="form-control" required><br>
 
     Age:
-    <input type="number" name="age" th:value="${user.age}" class="form-control"><br>
+    <input type="number" name="age" th:value="${user.age}" class="form-control" required><br>
 
     Username:
-    <input type="text" name="username" th:value="${user.username}" class="form-control"><br>
+    <input type="text" name="username" th:value="${user.username}" class="form-control" required><br>
 
     Password:
-    <input type="password" name="password" autocomplete="new-password" class="form-control"><br>
+    <input type="password" name="password" autocomplete="new-password" class="form-control" required><br>
 
     Roles:
-    <select id="roles" name="roles" multiple class="form-select">
+    <select id="roles" name="roles" multiple class="form-select" required>
 
     <option value = "1">ADMIN</option>
     <option value = "2">USER</option>
@@ -127,9 +129,13 @@
 
 
 <script>
+
+    const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
     async function loadUsers() {
 
-        const response = await fetch('/api/users');
+        const response = await fetch('/api/users', {
+        headers: {[csrfHeader]: csrfToken } });
         const users = await response.json();
         const table = document.getElementById('usersTable');
         table.innerHTML = '';
@@ -143,7 +149,7 @@
           <td>${u.username}</td>
 
        <td>
-        ${u.roles.map(r => r.role).join(' ')}
+            ${u.roles.join(' ')}
        </td>
 
      <td>
@@ -166,18 +172,19 @@
     async function deleteUser(id) {
 
         await fetch('/api/users/' + id, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: {[csrfHeader]: csrfToken
+            }
         });
 
        loadUsers();
     }
-     async function editUser(id) {
+    async function editUser(id) {
 
-    const response = await fetch('/api/users');
-
-    const users = await response.json();
-
-    const user = users.find(u => u.id === id);
+     const response = await fetch('/api/users/' + id, {
+        headers: {[csrfHeader]: csrfToken }
+    });
+    const user = await response.json();
 
     document.querySelector('[name="id"]').value = user.id;
     document.querySelector('[name="name"]').value = user.name;
@@ -186,34 +193,58 @@
     document.querySelector('[name="username"]').value = user.username;
     }
 
-    document.getElementById('userForm')
-        .addEventListener('submit', async function (e) {
+   document.getElementById('userForm')
+    .addEventListener('submit', async function (e) {
 
-            e.preventDefault();
+        e.preventDefault();
 
-            const formData = new FormData(this);
+        const id = document.querySelector('[name="id"]').value;
 
-            const user = Object.fromEntries(formData);
+        const user = {
+            name: document.querySelector('[name="name"]').value,
+            lastName: document.querySelector('[name="lastName"]').value,
+            age: document.querySelector('[name="age"]').value,
+            username: document.querySelector('[name="username"]').value,
+            password: document.querySelector('[name="password"]').value,
 
-            console.log(user);
+            roleIds: Array.from(
+                document.getElementById('roles').selectedOptions
+            ).map(option => Number(option.value))
+        };
 
-              user.roles = Array.from(
-              document.getElementById('roles').selectedOptions
-              ).map(option => ({
-               id: option.value
-                       }));
+        const url = id
+            ? '/api/users/' + id
+            : '/api/users';
 
-            await fetch('/api/users', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(user)
-            });
+        const method = id
+            ? 'PUT'
+            : 'POST';
 
-            loadUsers();
-            this.reset();
+        if (user.roleIds.length === 0) {
+            alert('Please select at least one role');
+            return;
+        }
+
+        if (!id && user.password.trim() === '') {
+        alert('Please enter password');
+        return;
+           }
+
+        await fetch(url, {
+            method: method,
+
+            headers: {
+                'Content-Type': 'application/json',
+                [csrfHeader]: csrfToken
+            },
+
+            body: JSON.stringify(user)
         });
+
+        loadUsers();
+
+        this.reset();
+    });
             loadUsers();
 
 </script>
